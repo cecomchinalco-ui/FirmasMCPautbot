@@ -1,16 +1,8 @@
-# Entorno virtual
 .venv/
 venv/
-
-# Variables de entorno
 .env
-
-# Credenciales
-credentials/*.json
-
-# Python
 __pycache__/
 *.py[cod]
-
-# Logs
-*.log
+credentials.json
+credenciales.json
+*.json

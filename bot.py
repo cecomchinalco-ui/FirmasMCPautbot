@@ -309,11 +309,38 @@ def main():
         menu_callback,
         pattern="^(buscar_dni|buscar_nombre|buscar_fotocheck|cancelar|menu)$",
     ))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, recibir_busqueda))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, recibir_busqueda)
+    )
     application.add_error_handler(error_handler)
 
-    logger.info("Bot iniciado.")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Configuración para Render Web Service.
+    # Render proporciona PORT y RENDER_EXTERNAL_URL automáticamente.
+    port = int(os.getenv("PORT", "10000"))
+    external_url = os.getenv("RENDER_EXTERNAL_URL", "").strip()
+
+    if not external_url:
+        raise RuntimeError(
+            "No se encontró RENDER_EXTERNAL_URL. "
+            "Este bot está configurado para ejecutarse como Web Service en Render."
+        )
+
+    # El token se utiliza como ruta del webhook para evitar exponer
+    # un endpoint Telegram genérico.
+    webhook_url = f"{external_url.rstrip('/')}/{TELEGRAM_BOT_TOKEN}"
+
+    logger.info("Bot iniciado en modo webhook.")
+    logger.info("Puerto HTTP: %s", port)
+    logger.info("Webhook configurado en: %s/<TOKEN>", external_url.rstrip("/"))
+
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=port,
+        url_path=TELEGRAM_BOT_TOKEN,
+        webhook_url=webhook_url,
+        allowed_updates=Update.ALL_TYPES,
+        drop_pending_updates=True,
+    )
 
 
 if __name__ == "__main__":
