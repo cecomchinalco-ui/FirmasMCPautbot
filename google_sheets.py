@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import unicodedata
@@ -5,6 +6,7 @@ from pathlib import Path
 
 import gspread
 from dotenv import load_dotenv
+from google.oauth2.service_account import Credentials
 
 
 # Cargar variables del archivo .env
@@ -73,6 +75,10 @@ class GoogleSheetsService:
             "credentials/google-service-account.json",
         ).strip()
 
+        # En Render se recomienda guardar las credenciales JSON
+        # en la variable de entorno GOOGLE_CREDENTIALS_JSON.
+        credentials_json = os.getenv("GOOGLE_CREDENTIALS_JSON", "").strip()
+
         spreadsheet_id = os.getenv(
             "GOOGLE_SHEET_ID",
             "",
@@ -89,26 +95,54 @@ class GoogleSheetsService:
         ).strip()
 
         # ---------------------------------------------------------
-        # VALIDAR ARCHIVO DE CREDENCIALES
-        # ---------------------------------------------------------
-
-        credentials_path = Path(credentials_file)
-
-        if not credentials_path.exists():
-            raise FileNotFoundError(
-                f"No se encontró el archivo de credenciales de Google:\n"
-                f"{credentials_path.resolve()}\n\n"
-                f"Verifica la variable GOOGLE_CREDENTIALS_FILE en el archivo .env."
-            )
-
-        # ---------------------------------------------------------
         # CONECTAR CON GOOGLE
+        # ---------------------------------------------------------
+        #
+        # Render:
+        #   GOOGLE_CREDENTIALS_JSON = contenido completo del JSON
+        #
+        # Local:
+        #   GOOGLE_CREDENTIALS_FILE = ruta al archivo JSON
         # ---------------------------------------------------------
 
         try:
-            self.client = gspread.service_account(
-                filename=str(credentials_path)
-            )
+            scopes = [
+                "https://www.googleapis.com/auth/spreadsheets",
+                "https://www.googleapis.com/auth/drive",
+            ]
+
+            if credentials_json:
+                info = json.loads(credentials_json)
+                credentials = Credentials.from_service_account_info(
+                    info,
+                    scopes=scopes,
+                )
+                self.client = gspread.authorize(credentials)
+                print("🔐 Credenciales de Google cargadas desde GOOGLE_CREDENTIALS_JSON.")
+
+            else:
+                credentials_path = Path(credentials_file)
+
+                if not credentials_path.exists():
+                    raise FileNotFoundError(
+                        f"No se encontró el archivo de credenciales de Google:\n"
+                        f"{credentials_path.resolve()}\n\n"
+                        "En Render configura GOOGLE_CREDENTIALS_JSON con el "
+                        "contenido completo del JSON de la cuenta de servicio."
+                    )
+
+                credentials = Credentials.from_service_account_file(
+                    str(credentials_path),
+                    scopes=scopes,
+                )
+                self.client = gspread.authorize(credentials)
+                print("🔐 Credenciales de Google cargadas desde archivo local.")
+
+        except json.JSONDecodeError as error:
+            raise RuntimeError(
+                "GOOGLE_CREDENTIALS_JSON no contiene un JSON válido."
+            ) from error
+
         except Exception as error:
             raise RuntimeError(
                 "No se pudo conectar con Google Sheets.\n"
