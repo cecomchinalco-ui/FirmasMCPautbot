@@ -11,6 +11,7 @@ jobs:
     steps:
       - name: Check Render service
         run: |
+         echo "Hora de comprobación UTC: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           for intento in 1 2; do
             echo "Intento $intento de comprobar Render"
 
