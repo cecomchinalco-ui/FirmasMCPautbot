@@ -1,18 +1,22 @@
-name: Render Health Check
-
-on:
-  schedule:
-    - cron: "*/10 * * * *"
-  workflow_dispatch:
-
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Render service
+- name: Check Render service
         run: |
-          curl --silent --show-error --location \
-            --max-time 30 \
-            --output /dev/null \
-            --write-out "HTTP status: %{http_code}\n" \
-            https://firmasmcpautbot.onrender.com/
+          for intento in 1 2; do
+            echo "Intento $intento de comprobar Render"
+
+            if curl --silent --show-error --location \
+              --connect-timeout 15 \
+              --max-time 50 \
+              --output /dev/null \
+              --write-out "HTTP status: %{http_code}\n" \
+              https://firmasmcpautbot.onrender.com/; then
+              exit 0
+            fi
+
+            echo "Falló el intento $intento"
+
+            if [ "$intento" -eq 1 ]; then
+              sleep 5
+            fi
+          done
+
+          exit 1
