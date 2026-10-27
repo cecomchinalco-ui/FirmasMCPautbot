@@ -356,6 +356,8 @@ def main():
         drop_pending_updates=False,
     )
 
+    logger.warning("DIAGNÓSTICO: run_webhook() terminó.")
+
 
 if __name__ == "__main__":
     main()
