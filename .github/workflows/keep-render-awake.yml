@@ -11,24 +11,31 @@ jobs:
     steps:
       - name: Check Render service
         run: |
-         echo "Hora de comprobación UTC: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Hora de comprobación UTC: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
           for intento in 1 2; do
             echo "Intento $intento de comprobar Render"
 
-            if curl --silent --show-error --location \
+            codigo=$(curl --silent --show-error --location \
               --connect-timeout 15 \
               --max-time 50 \
               --output /dev/null \
-              --write-out "HTTP status: %{http_code}\n" \
-              https://firmasmcpautbot.onrender.com/; then
+              --write-out "%{http_code}" \
+              https://firmasmcpautbot.onrender.com/ || true)
+
+            echo "HTTP status: $codigo"
+
+            if [ "$codigo" = "200" ]; then
+              echo "Servicio accesible."
               exit 0
             fi
 
-            echo "Falló el intento $intento"
+            echo "La comprobación no devolvió HTTP 200."
 
             if [ "$intento" -eq 1 ]; then
               sleep 5
             fi
           done
 
+          echo "ERROR: Render no devolvió HTTP 200."
           exit 1
