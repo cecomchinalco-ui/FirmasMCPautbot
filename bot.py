@@ -1,6 +1,7 @@
 import logging
 import os
 
+from telegram.error import BadRequest
 from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
@@ -165,9 +166,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+
 async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
+
+    if query is None:
+        return
+
+    try:
+        await query.answer()
+    except BadRequest as exc:
+        logger.warning(
+            "Consulta de botón caducada o inválida: %s",
+            exc,
+        )
+        return
 
     if not es_grupo_permitido(update):
         await acceso_denegado(update)
@@ -178,7 +191,8 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if accion == "cancelar":
         context.user_data.clear()
         await query.edit_message_text(
-            "❌ Consulta cancelada.\n\nPulsa /start para abrir nuevamente el menú."
+            "❌ Consulta cancelada.\n\n"
+            "Pulsa /start para abrir nuevamente el menú."
         )
         return
 
@@ -190,32 +204,32 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    if accion == "buscar_dni":
-        context.user_data["modo_busqueda"] = "dni"
-        await query.edit_message_text(
+    opciones = {
+        "buscar_dni": (
             "🪪 CONSULTA POR DNI / CE\n\n"
             "Ingrese el número de DNI o CE:\n\n"
             "💡 Los espacios y mayúsculas/minúsculas no afectan la búsqueda.",
-            reply_markup=botones_cancelar(),
-        )
-        return
-
-    if accion == "buscar_nombre":
-        context.user_data["modo_busqueda"] = "nombre"
-        await query.edit_message_text(
+            "dni",
+        ),
+        "buscar_nombre": (
             "📋 CONSULTA POR NOMBRE\n\n"
             "Ingrese nombres o apellidos:\n\n"
             "💡 No importa si escribe en mayúsculas o minúsculas.",
-            reply_markup=botones_cancelar(),
-        )
-        return
-
-    if accion == "buscar_fotocheck":
-        context.user_data["modo_busqueda"] = "fotocheck"
-        await query.edit_message_text(
+            "nombre",
+        ),
+        "buscar_fotocheck": (
             "🎫 CONSULTA POR FOTOCHECK\n\n"
             "Ingrese el número o código del fotocheck:\n\n"
             "💡 Los espacios y mayúsculas/minúsculas no afectan la búsqueda.",
+            "fotocheck",
+        ),
+    }
+
+    if accion in opciones:
+        mensaje, modo = opciones[accion]
+        context.user_data["modo_busqueda"] = modo
+        await query.edit_message_text(
+            mensaje,
             reply_markup=botones_cancelar(),
         )
 
