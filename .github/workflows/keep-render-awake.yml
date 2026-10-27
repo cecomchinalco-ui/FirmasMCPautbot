@@ -1,0 +1,18 @@
+name: Render Health Check
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Render service
+        run: |
+          curl --silent --show-error --location \
+            --max-time 30 \
+            --output /dev/null \
+            --write-out "HTTP status: %{http_code}\n" \
+            https://firmasmcpautbot.onrender.com/
