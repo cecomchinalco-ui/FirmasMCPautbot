@@ -1,6 +1,7 @@
 import logging
 import os
 
+import telegram
 import signal
 import sys
 import threading
@@ -27,6 +28,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+logger.info(
+    "DIAGNÓSTICO: versión python-telegram-bot=%s",
+    telegram.__version__,
+)
 
 def registrar_salida():
     logger.warning(
