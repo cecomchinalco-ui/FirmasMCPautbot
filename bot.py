@@ -391,7 +391,12 @@ def main():
         drop_pending_updates=False,
     )
 
-    logger.warning("DIAGNÓSTICO: run_webhook() terminó.")
+    logger.error(
+        "DIAGNÓSTICO: run_webhook() terminó inesperadamente. "
+        "application.running=%s",
+        application.running,
+    )
+    raise RuntimeError("run_webhook() terminó inesperadamente.")
 
 
 if __name__ == "__main__":
