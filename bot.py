@@ -24,34 +24,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-logger.info(
-    "DIAGNÓSTICO: versión python-telegram-bot=%s",
-    telegram.__version__,
-)
-
-def registrar_salida():
-    logger.warning(
-        "DIAGNÓSTICO: el proceso Python está finalizando."
-    )
-
-
-def registrar_senal(signum, frame):
-    logger.warning(
-        "DIAGNÓSTICO: recibida señal %s.", signum
-    )
-    sys.exit(128 + signum)
-
-
-atexit.register(registrar_salida)
-
-for senal in (signal.SIGTERM, signal.SIGINT):
-    signal.signal(senal, registrar_senal)
-
-logger.info(
-    "DIAGNÓSTICO: proceso iniciado. PID=%s; hilo=%s",
-    os.getpid(),
-    threading.current_thread().name,
-)
 
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
