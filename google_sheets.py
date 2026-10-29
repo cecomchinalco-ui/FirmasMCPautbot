@@ -363,43 +363,42 @@ class GoogleSheetsService:
 
     def buscar_nombre(self, consulta: str) -> list[dict]:
         """
-        Busca por NOMBRES Y APELLIDOS.
-
-        Permite coincidencias parciales.
-
-        Ejemplo:
-
-        Google Sheet:
-            JUAN CARLOS PEREZ GOMEZ
-
-        Consulta:
-            juan carlos
-
-        Resultado:
-            Coincide.
-
-        También ignora diferencias entre mayúsculas/minúsculas
-        y espacios adicionales.
+        Busca por nombres y apellidos sin importar el orden.
+        Todos los términos ingresados deben coincidir con
+        palabras del nombre registrado.
+        Ignora mayúsculas, tildes y espacios adicionales.
         """
 
-        buscado = normalizar_texto(consulta)
+        def normalizar_nombre(valor: object) -> str:
+            texto = normalizar_texto(valor)
+            texto = unicodedata.normalize("NFD", texto)
+            texto = "".join(
+                caracter
+                for caracter in texto
+                if unicodedata.category(caracter) != "Mn"
+            )
+            return texto
+
+        buscado = normalizar_nombre(consulta)
 
         if not buscado:
             return []
 
+        palabras = buscado.split()
         resultados = []
 
         for registro in self.obtener_registros():
-
-            nombre = normalizar_texto(
+            nombre = normalizar_nombre(
                 registro.get("NOMBRES Y APELLIDOS", "")
             )
 
-            if buscado in nombre:
+            palabras_nombre = nombre.split()
 
+            if all(palabra in palabras_nombre for palabra in palabras):
                 resultados.append(registro)
 
         return resultados
+
 
     # =============================================================
     # BUSCAR SEGÚN TIPO
