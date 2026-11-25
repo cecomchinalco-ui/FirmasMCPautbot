@@ -329,7 +329,7 @@ class GoogleSheetsService:
     # BUSCAR FOTOCHECK
     # =============================================================
 
-     def buscar_fotocheck(self, consulta: str) -> list[dict]:
+    def buscar_fotocheck(self, consulta: str) -> list[dict]:
         """
         Busca por FOTOCHECK con o sin prefijo MCP.
         Ignora espacios, guiones, mayúsculas y ceros iniciales.
