@@ -329,48 +329,45 @@ class GoogleSheetsService:
     # BUSCAR FOTOCHECK
     # =============================================================
 
-    def buscar_fotocheck(self, consulta: str) -> list[dict]:
-    """
-    Busca por FOTOCHECK con o sin prefijo MCP.
-    Ignora espacios, guiones, mayúsculas y ceros iniciales.
-    """
+     def buscar_fotocheck(self, consulta: str) -> list[dict]:
+        """
+        Busca por FOTOCHECK con o sin prefijo MCP.
+        Ignora espacios, guiones, mayúsculas y ceros iniciales.
+        """
 
-    def normalizar_fotocheck(valor):
-        if valor is None:
-            return ""
+        def normalizar_fotocheck(valor):
+            if valor is None:
+                return ""
 
-        codigo = re.sub(
-            r"[^A-Z0-9]",
-            "",
-            normalizar_texto(valor)
-        )
+            codigo = re.sub(
+                r"[^A-Z0-9]",
+                "",
+                normalizar_texto(valor)
+            )
 
-        # Eliminar MCP si aparece al inicio
-        codigo = re.sub(r"^MCP", "", codigo)
+            codigo = re.sub(r"^MCP", "", codigo)
 
-        # Ignorar ceros iniciales
-        if codigo.isdigit():
-            codigo = codigo.lstrip("0")
+            if codigo.isdigit():
+                codigo = codigo.lstrip("0")
 
-        return codigo
+            return codigo
 
-    buscado = normalizar_fotocheck(consulta)
+        buscado = normalizar_fotocheck(consulta)
 
-    if not buscado:
-        return []
+        if not buscado:
+            return []
 
-    resultados = []
+        resultados = []
 
-    for registro in self.obtener_registros():
+        for registro in self.obtener_registros():
+            valor = normalizar_fotocheck(
+                registro.get("FOTOCHECK", "")
+            )
 
-        valor = normalizar_fotocheck(
-            registro.get("FOTOCHECK", "")
-        )
+            if valor and valor == buscado:
+                resultados.append(registro)
 
-        if valor and valor == buscado:
-            resultados.append(registro)
-
-    return resultados
+        return resultados
 
     # =============================================================
     # BUSCAR POR NOMBRE
