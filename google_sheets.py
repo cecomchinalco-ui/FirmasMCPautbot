@@ -330,32 +330,47 @@ class GoogleSheetsService:
     # =============================================================
 
     def buscar_fotocheck(self, consulta: str) -> list[dict]:
-        """
-        Busca por FOTOCHECK.
+    """
+    Busca por FOTOCHECK con o sin prefijo MCP.
+    Ignora espacios, guiones, mayúsculas y ceros iniciales.
+    """
 
-        Ignora:
-        - Espacios
-        - Mayúsculas/minúsculas
-        """
+    def normalizar_fotocheck(valor):
+        if valor is None:
+            return ""
 
-        buscado = normalizar_codigo(consulta)
+        codigo = re.sub(
+            r"[^A-Z0-9]",
+            "",
+            normalizar_texto(valor)
+        )
 
-        if not buscado:
-            return []
+        # Eliminar MCP si aparece al inicio
+        codigo = re.sub(r"^MCP", "", codigo)
 
-        resultados = []
+        # Ignorar ceros iniciales
+        if codigo.isdigit():
+            codigo = codigo.lstrip("0")
 
-        for registro in self.obtener_registros():
+        return codigo
 
-            valor = normalizar_codigo(
-                registro.get("FOTOCHECK", "")
-            )
+    buscado = normalizar_fotocheck(consulta)
 
-            if valor == buscado:
+    if not buscado:
+        return []
 
-                resultados.append(registro)
+    resultados = []
 
-        return resultados
+    for registro in self.obtener_registros():
+
+        valor = normalizar_fotocheck(
+            registro.get("FOTOCHECK", "")
+        )
+
+        if valor and valor == buscado:
+            resultados.append(registro)
+
+    return resultados
 
     # =============================================================
     # BUSCAR POR NOMBRE
